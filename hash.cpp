@@ -1,197 +1,275 @@
-#include<iostream>
-#include<fstream>
-#include<vector>
-#include<iterator>
-#include<string>
-#include<map>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <iterator>
+#include <string>
+#include <map>
+#include <limits>
+#include <sstream>
+
 using namespace std;
 template <typename t1, typename t2>
 class hashMap
 {
 public:
-struct hashPair
-{
-t1 key;
-t2 value;
-hashPair * link;
-};
-struct iteratorPair
-{
-t1 * key;
-t2 * value;
-iteratorPair * link;
-};
-class iterator
-{
-public:
-friend class hashMap;
-iterator ();
-const iterator& operator ++(int);
-bool operator ==( const iterator &) const;
-bool operator !=( const iterator &) const;
-t1 first ();
-t2 second ();
-private:
-iterator(iteratorPair *);
-iteratorPair * element;
-};
-hashMap ();
-~hashMap ();
-t2& operator [](t1);
-iterator begin () const;
-iterator end() const;
-private:
-void resize ();
-int h(std:: string) const;
-int items;
-int size;
-hashPair ** table;
-iteratorPair * head;
-};
+    struct hashPair
+    {
+        t1 key;
+        t2 value;
+        hashPair *link;
+    };
+    struct iteratorPair
+    {
+        t1 *key;
+        t2 *value;
+        iteratorPair *link;
+    };
+    class iterator
+    {
+    public:
+        friend class hashMap; // can access private members of hashMap class.
+        iterator();
+        const iterator &operator++(int);
+        bool operator==(const iterator &) const;
+        bool operator!=(const iterator &) const;
+        t1 first();
+        t2 second();
 
+    private:
+        iterator(iteratorPair *);
+        iteratorPair *element;
+    };
+    hashMap();
+    ~hashMap();
+    t2 &operator[](t1);
+    iterator begin() const;
+    iterator end() const;
 
-template <typename t1, typename t2>
-hashMap<t1,t2>::hashMap()
+private:
+    void resize();
+    int h(std::string) const;
+    int items;
+    int size;
+    hashPair **table;
+    iteratorPair *head;
+    int currentLineNumber;
+};
+// Seek to the required line in the file text and parse as a string and return value
+std::string GotoFileLine(std::ifstream &file, unsigned int num)
 {
-    //set default values
-    size=5;
-    items=0;
-    head=NULL;
-    table=new hashPair *[size];
-    table=NULL;
+    file.seekg(std::ios::beg);
+    for (int i = 0; i < num - 1; ++i)
+    {
+        file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+
+    // Return the specific line as a string value
+    std::string lineContent((std::istreambuf_iterator<char>(file)),
+                            (std::istreambuf_iterator<char>()));
+    return lineContent;
 }
 
-
-template<typename t1, typename t2>
-hashMap<t1,t2>::~hashMap()
+template <typename t1, typename t2>
+hashMap<t1, t2>::hashMap()
 {
-    //set the destructor values
-    hashPair *temp= new hashPair;
-    temp=head;
-    head=head->key;
-    delete temp;
-    // for (int i = 0; i < rows; i++) 
+    cout << "Constructor" << endl;
+    int numberOfCandidates;
+
+    ifstream infile;
+
+    string read_file_name("input01.txt");
+
+    infile.open(read_file_name);
+    // set default values
+    size = 5;
+    items = 0;
+
+    if (infile.good())
+    {
+        // Get the number of candidates which is always on the second line
+        numberOfCandidates = stoi(GotoFileLine(infile, 2));  // converts to integer
+        cout << "Candidates" << numberOfCandidates << endl;
+    }
+
+    // Array of pointers to info struct
+    // of size
+    table = new hashPair *[size];
+
+    // Initialize pointer array to NULL
+    for (int i = 0; i < size; ++i)
+    {
+        *(table + i) = NULL;
+    }
+
+    // Loop through the candidates list and assign them all as key value pairs in the Hash Map
+    // Candidate / Party value always starts from Line 3 
+    for (int i = 3; i < (numberOfCandidates + i); i+2)
+    {
+        currentLineNumber = i; // holds the current read line of the file
+        string fileLineKey= GotoFileLine(infile, i); // this is the unique candidate key
+        string fileLineValue= GotoFileLine(infile, i + 1); // this is the unique candidate key
+         
+        hashMap hash;
+        hash[fileLineKey , fileLineValue];    // pass in the returned values to the overloaded operator
+    }
+}
+
+template <typename t1, typename t2>
+hashMap<t1, t2>::~hashMap()
+{
+    // set the destructor values
+    // hashPair *temp = new hashPair;
+    // temp = head;
+    // head = head->key;
+    // delete temp;
+    // for (int i = 0; i < rows; i++)
     //     {
-    // for (int j = 0; j < cols; j++) 
+    // for (int j = 0; j < cols; j++)
     //     {
     //     delete table[i][j]; // delete stored pointer
     //     }
     // delete[] table[i]; // delete sub array
     // }
-    delete [] table; //delete outer array
-    table = NULL;
+    // delete[] table; // delete outer array
+    // table = NULL;
 }
 
-
-template<typename t1, typename t2>
-t2& hashMap<t1,t2>::operator[](t1 key)
+// insert/find for the hash map,
+template <typename t1, typename t2>
+t2 &hashMap<t1, t2>::operator[](t1 key)
 {
-    double loadFactor=items/size;
-    if(loadFactor>=0.5)
+   /* Commented temporarily 
+    double loadFactor = items / size;
+    if (loadFactor >= 0.5)
     {
         resize();
     }
-    int x=h(key);
-    if(table[x]==NULL||table[x]==1||table[x]==2)
+    int x = h(key);
+    if (table[x] == NULL || table[x] == 1 || table[x] == 2)
     {
-
     }
+    */
+
+    // Successful so insert into the hashmap
+
+    // Create a new hashpair node
+    hashPair *node = new hashPair;
+
+    // To track last node of the list
+    hashPair *prev = NULL;
+    // Input the Key value pair data
+    
+    node->key = key;
+    node->value = t2(); // default value 
+    node->link = NULL;
+
+    // If the node is first
+    if (*(table + 1) == NULL)
+    {
+        *(table + 1) = node;
+    }
+    else
+    {
+        prev->link = node;
+    }
+    prev = node;
 }
 
-template<typename t1, typename t2>
-typename hashMap<t1,t2>::iterator hashMap<t1,t2>::begin()const
+template <typename t1, typename t2>
+typename hashMap<t1, t2>::iterator hashMap<t1, t2>::begin() const
 {
-    return head=head->link;
+    return head = head->link;
 }
 
-
-template<typename t1, typename t2>
-typename hashMap<t1,t2>::iterator hashMap<t1,t2>::end() const
+template <typename t1, typename t2>
+typename hashMap<t1, t2>::iterator hashMap<t1, t2>::end() const
 {
     return NULL;
 }
 
-
-template<typename t1,typename t2>
-void hashMap<t1,t2>::resize()
+template <typename t1, typename t2>
+void hashMap<t1, t2>::resize()
 {
-    table=table*table;
+    table = table * table;
 }
 
-
-template<typename t1, typename t2>
-int hashMap<t1,t2>::h(std::string key)const
+template <typename t1, typename t2>
+int hashMap<t1, t2>::h(std::string key) const
 {
-    int value=int(key);
+    int value;
+    int stringSize = key.size();
+    int stringASCIISum = 0;
+    // Loop through the given string and add up the ASCII values
+    for (int i = 0; i < key.size(); i++)
+    {
+        cout << "\nThe ASCII Value of " << key[i] << " = " << (int)key[i];
+        stringASCIISum = stringASCIISum + key[i];
+    }
+
+    // mods the ASCII sum by it by the string size and return value
+    value = stringASCIISum % stringSize;
     return value;
 }
 
-
-template<typename t1,typename t2>
-hashMap<t1,t2>::iterator::iterator()
+template <typename t1, typename t2>
+hashMap<t1, t2>::iterator::iterator()
 {
-    element=NULL;
+    element = NULL;
 }
 
-
-template<typename t1, typename t2>
-hashMap<t1,t2>::iterator::iterator(iteratorPair *P)
+template <typename t1, typename t2>
+hashMap<t1, t2>::iterator::iterator(iteratorPair *P)
 {
-    element=P;
+    element = P;
 }
 
-
-template<typename t1, typename t2>
-const typename hashMap<t1,t2>::iterator& hashMap<t1,t2>::iterator::operator++(int)
+template <typename t1, typename t2>
+const typename hashMap<t1, t2>::iterator &hashMap<t1, t2>::iterator::operator++(int)
 {
-    //operator overloading
-    hashPair temp= *this;
+    // operator overloading
+    hashPair temp = *this;
     ++*this;
     return temp;
 }
 
-
-template<typename t1, typename t2>
-bool hashMap<t1,t2>::iterator::operator==(const hashMap<t1,t2>::iterator &rhs) const
+template <typename t1, typename t2>
+bool hashMap<t1, t2>::iterator::operator==(const hashMap<t1, t2>::iterator &rhs) const
 {
-    if (this->element==rhs.element)
-    return true;
-    
+    if (this->element == rhs.element)
+        return true;
+
     return false;
 }
 
-
-template<typename t1,typename t2>
-bool hashMap<t1, t2>::iterator::operator!=(const hashMap <t1,t2>::iterator &rhs) const
+template <typename t1, typename t2>
+bool hashMap<t1, t2>::iterator::operator!=(const hashMap<t1, t2>::iterator &rhs) const
 {
-    if(this->element==rhs.element)
-    return false;
-    
+    if (this->element == rhs.element)
+        return false;
+
     return true;
 }
 
-
-template<typename t1, typename t2>
-t1 hashMap<t1,t2>::iterator::first()
+template <typename t1, typename t2>
+t1 hashMap<t1, t2>::iterator::first()
 {
     return *(element->key);
 }
 
-
-template<typename t1,typename t2>
-t2 hashMap<t1,t2>::iterator::second()
+template <typename t1, typename t2>
+t2 hashMap<t1, t2>::iterator::second()
 {
     return *(element->value);
 }
 
 int main()
 {
+    /* Temporarly disabled inputs
     string entry;
-    cout<<"Enter filename: "<<endl;
-    cin>>entry;
-    ifstream fin;
-    string read_file_name(entry);
-    fin.open(read_file_name);
-    
-    fin.close();
+     cout << "Enter filename: " << endl;
+     cin >> entry;
+    */
+
+    // Create an Instance
+    hashMap<std::string, std::string> myHash;
 }
